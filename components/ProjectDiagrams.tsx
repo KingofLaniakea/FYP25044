@@ -150,41 +150,38 @@ export const N50Chart: React.FC = () => {
     const maxVal = 35; // Mb
 
     return (
-        <div className="flex flex-col md:flex-row gap-8 items-center p-8 bg-stone-900 text-stone-100 rounded-xl my-8 border border-stone-800 shadow-xl">
+        <div className="flex flex-col md:flex-row gap-8 items-center p-8 bg-white text-stone-900 rounded-xl my-8 border border-stone-200 shadow-lg">
             <div className="flex-1 min-w-[240px]">
-                <h3 className="font-serif text-2xl mb-2 text-hku-gold text-[#C5A059]">Haplotype Contiguity (N50)</h3>
-                <p className="text-stone-400 text-sm mb-6 leading-relaxed">
+                <h3 className="font-serif text-2xl mb-2 text-[#007D69]">Haplotype Contiguity (N50)</h3>
+                <p className="text-stone-600 text-sm mb-6 leading-relaxed">
                     N50 represents the length of continuous phased blocks. By bridging gaps with methylation signals, we achieve a massive increase in contiguity, especially at higher coverages.
                 </p>
                 
                 <div className="flex gap-2 mb-8">
-                    <button onClick={() => setCoverage('10x')} className={`px-4 py-2 rounded text-sm font-bold transition-colors ${coverage === '10x' ? 'bg-[#C5A059] text-black' : 'bg-stone-800 text-stone-400 hover:bg-stone-700'}`}>10x Coverage</button>
-                    <button onClick={() => setCoverage('50x')} className={`px-4 py-2 rounded text-sm font-bold transition-colors ${coverage === '50x' ? 'bg-[#C5A059] text-black' : 'bg-stone-800 text-stone-400 hover:bg-stone-700'}`}>50x Coverage</button>
+                    <button onClick={() => setCoverage('10x')} className={`px-4 py-2 rounded text-sm font-bold transition-colors ${coverage === '10x' ? 'bg-[#007D69] text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>10x Coverage</button>
+                    <button onClick={() => setCoverage('50x')} className={`px-4 py-2 rounded text-sm font-bold transition-colors ${coverage === '50x' ? 'bg-[#007D69] text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>50x Coverage</button>
                 </div>
 
-                <div className="flex items-center gap-3 text-[#C5A059]">
+                <div className="flex items-center gap-3 text-[#007D69]">
                     <BarChart size={20} />
                     <span className="font-mono text-sm uppercase font-bold">Result: {current.improvement} Improvement</span>
                 </div>
             </div>
             
-            <div className="relative w-full max-w-sm h-80 bg-stone-800/50 rounded-xl border border-stone-700/50 p-6 flex justify-around items-end">
-                {/* Y Axis Label */}
+            <div className="relative w-full max-w-sm h-80 bg-stone-50 rounded-xl border border-stone-200 p-6 flex justify-around items-end">
                 <div className="absolute left-2 top-2 text-xs text-stone-500 font-mono">Phase Set N50 (Mb)</div>
 
-                {/* Grid */}
-                <div className="absolute inset-0 p-6 flex flex-col justify-between pointer-events-none opacity-10">
-                   {[...Array(5)].map((_, i) => <div key={i} className="w-full h-[1px] bg-white"></div>)}
+                <div className="absolute inset-0 p-6 flex flex-col justify-between pointer-events-none opacity-5">
+                   {[...Array(5)].map((_, i) => <div key={i} className="w-full h-[1px] bg-stone-900"></div>)}
                 </div>
 
-                {/* Baseline Bar */}
                 <div className="w-24 flex flex-col justify-end items-center h-full z-10 group">
                     <div className="flex-1 w-full flex items-end justify-center relative mb-3">
-                        <div className="absolute -top-8 w-full text-center text-sm font-mono text-stone-400 font-bold opacity-100 transition-opacity bg-stone-900 px-2 py-1 rounded border border-stone-700">
+                        <div className="absolute -top-8 w-full text-center text-sm font-mono text-stone-500 font-bold opacity-100 transition-opacity bg-white px-2 py-1 rounded border border-stone-200 shadow-sm">
                             {current.baseline} Mb
                         </div>
                         <motion.div 
-                            className="w-full bg-stone-600 rounded-t-md border-t border-x border-stone-500/30"
+                            className="w-full bg-stone-300 rounded-t-md border-t border-x border-stone-200"
                             initial={{ height: 0 }}
                             animate={{ height: `${(current.baseline / maxVal) * 100}%` }}
                             transition={{ type: "spring", stiffness: 60 }}
@@ -193,22 +190,21 @@ export const N50Chart: React.FC = () => {
                     <div className="h-8 flex items-center text-xs font-bold text-stone-500 uppercase tracking-wider text-center">Baseline<br/>(SNP Only)</div>
                 </div>
 
-                {/* Ours Bar */}
                 <div className="w-24 flex flex-col justify-end items-center h-full z-10 group">
                      <div className="flex-1 w-full flex items-end justify-center relative mb-3">
-                        <div className="absolute -top-8 w-full text-center text-sm font-mono text-[#C5A059] font-bold opacity-100 transition-opacity bg-stone-900 px-2 py-1 rounded border border-[#C5A059]">
+                        <div className="absolute -top-8 w-full text-center text-sm font-mono text-white font-bold opacity-100 transition-opacity bg-[#007D69] px-2 py-1 rounded shadow-md">
                             {current.ours} Mb
                         </div>
                         <motion.div 
-                            className="w-full bg-[#C5A059] rounded-t-md shadow-[0_0_20px_rgba(197,160,89,0.3)] relative overflow-hidden"
+                            className="w-full bg-[#007D69] rounded-t-md shadow-lg relative overflow-hidden"
                             initial={{ height: 0 }}
                             animate={{ height: `${(current.ours / maxVal) * 100}%` }}
                             transition={{ type: "spring", stiffness: 60, delay: 0.1 }}
                         >
-                             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                             <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
                         </motion.div>
                     </div>
-                     <div className="h-8 flex items-center text-xs font-bold text-[#C5A059] uppercase tracking-wider text-center">Clair3 +<br/>Methylation</div>
+                     <div className="h-8 flex items-center text-xs font-bold text-[#007D69] uppercase tracking-wider text-center">Clair3 +<br/>Methylation</div>
                 </div>
             </div>
         </div>
@@ -217,26 +213,30 @@ export const N50Chart: React.FC = () => {
 
 // --- WORKFLOW DIAGRAM ---
 export const WorkflowDiagram: React.FC = () => {
+    const steps = [
+        { title: "Input BAM", icon: <Dna size={24}/>, desc: "Reads with SNPs & Methylation tags" },
+        { title: "ASM Site ID", icon: <Microscope size={24}/>, desc: "Fisher's Exact Test finds allele-specific patterns" },
+        { title: "Haplotype Assign", icon: <GitMerge size={24} className="rotate-90"/>, desc: "Use ASM to phase 'dark' reads" },
+        { title: "Concatenation", icon: <ArrowRight size={24}/>, desc: "Merge phase sets for long contiguity" },
+    ];
+
     return (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 w-full my-8">
-            {[
-                { title: "Input BAM", icon: <Dna size={24}/>, desc: "Reads with SNPs & Methylation tags" },
-                { title: "ASM Site ID", icon: <Microscope size={24}/>, desc: "Fisher's Exact Test finds allele-specific patterns" },
-                { title: "Haplotype Assign", icon: <GitMerge size={24} className="rotate-90"/>, desc: "Use ASM to phase 'dark' reads" },
-                { title: "Concatenation", icon: <ArrowRight size={24}/>, desc: "Merge phase sets for long contiguity" },
-            ].map((step, i) => (
-                <div key={i} className="flex flex-col items-center p-6 bg-white rounded-lg border border-stone-200 shadow-sm relative">
-                    <div className="w-12 h-12 rounded-full bg-[#007D69]/10 flex items-center justify-center text-[#007D69] mb-4">
-                        {step.icon}
+        <div className="flex flex-col md:flex-row items-stretch justify-center gap-4 w-full my-8">
+            {steps.map((step, i) => (
+                <React.Fragment key={i}>
+                    <div className="flex flex-col items-center p-6 bg-white rounded-lg border border-stone-200 shadow-sm flex-1 max-w-xs min-h-[180px]">
+                        <div className="w-12 h-12 rounded-full bg-[#007D69]/10 flex items-center justify-center text-[#007D69] mb-4 flex-shrink-0">
+                            {step.icon}
+                        </div>
+                        <h4 className="font-bold text-stone-800 mb-2 text-center">{step.title}</h4>
+                        <p className="text-xs text-stone-500 text-center leading-relaxed flex-grow">{step.desc}</p>
                     </div>
-                    <h4 className="font-bold text-stone-800 mb-2 text-center">{step.title}</h4>
-                    <p className="text-xs text-stone-500 text-center leading-relaxed">{step.desc}</p>
                     {i < 3 && (
-                        <div className="hidden md:block absolute -right-3 top-1/2 -translate-y-1/2 z-10 text-stone-300">
+                        <div className="hidden md:flex items-center justify-center text-stone-400 px-2 flex-shrink-0">
                             <ArrowRight size={20} />
                         </div>
                     )}
-                </div>
+                </React.Fragment>
             ))}
         </div>
     )
