@@ -6,8 +6,8 @@
 
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { AsmPhasingDemo, N50Chart, WorkflowDiagram } from './components/ProjectDiagrams';
-import { ArrowDown, Menu, X, FileText, Github, Linkedin, Microscope, ChevronRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowDown, Menu, X, FileText, Github, Linkedin } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 // Lazy load 3D scene to improve initial load
 const BioHeroScene = lazy(() => import('./components/BioScene').then(m => ({ default: m.BioHeroScene })));
@@ -19,7 +19,6 @@ const SceneFallback = () => (
 const App: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [showPortal, setShowPortal] = useState(true);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -39,62 +38,8 @@ const App: React.FC = () => {
     }
   };
 
-  const enterSite = () => {
-    setShowPortal(false);
-    window.scrollTo({ top: 0 });
-  };
-
   return (
     <div className="min-h-screen bg-[#F5F9F8] text-stone-800 selection:bg-[#007D69] selection:text-white font-sans">
-
-      {/* Initial Portal Animation Layer */}
-      <AnimatePresence>
-        {showPortal && (
-          <motion.div
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0, y: -100 }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
-            className="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center p-6 text-center"
-          >
-            <div className="absolute inset-0 opacity-10 pointer-events-none">
-              <Suspense fallback={<SceneFallback />}>
-                <BioHeroScene />
-              </Suspense>
-            </div>
-
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 1 }}
-              className="relative z-10"
-            >
-              <div className="w-20 h-20 bg-[#007D69] mx-auto mb-8 rounded-sm flex items-center justify-center text-white font-serif font-bold text-4xl shadow-2xl">
-                T
-              </div>
-              <h2 className="text-stone-400 uppercase tracking-[0.3em] text-sm font-bold mb-4">Final Year Project • FYP25044</h2>
-              <h1 className="font-serif text-3xl md:text-5xl font-bold text-stone-900 mb-6 max-w-3xl leading-tight">
-                Aggregating Epigenetic Methylation Signals for Long-Read Variant Calling
-              </h1>
-              <p className="text-stone-500 max-w-xl mx-auto mb-12 text-lg font-light leading-relaxed">
-                Exploring the synergy between DNA methylation and genomic sequence for high-accuracy haplotype phasing.
-              </p>
-
-              <button
-                onClick={enterSite}
-                className="group relative inline-flex items-center gap-3 px-10 py-4 bg-stone-900 text-white rounded-full overflow-hidden transition-all hover:bg-[#007D69] hover:pr-12"
-              >
-                <span className="font-bold tracking-widest text-sm">开始了解研究细节</span>
-                <ChevronRight className="absolute right-4 transition-all opacity-0 group-hover:opacity-100" size={20} />
-                <Microscope size={18} className="group-hover:opacity-0 transition-opacity" />
-              </button>
-            </motion.div>
-
-            <div className="absolute bottom-12 text-[10px] text-stone-400 font-bold uppercase tracking-widest">
-              The University of Hong Kong • Dept. of Computer Science
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Navigation */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-4' : 'bg-transparent py-6'}`}>
@@ -140,7 +85,7 @@ const App: React.FC = () => {
           <div className="inline-block mb-8 px-4 py-2 border border-[#007D69] text-[#007D69] text-xs tracking-[0.2em] uppercase font-bold rounded-sm backdrop-blur-sm bg-white/60">
             The University of Hong Kong
           </div>
-          <h1 className="font-serif text-4xl md:text-5xl font-bold tracking-tight leading-tight mb-8 text-stone-900 drop-shadow-sm max-w-4xl mx-auto">
+          <h1 className="font-serif text-4xl md:text-5xl font-bold tracking-tight leading-relaxed mb-8 text-stone-900 drop-shadow-sm max-w-4xl mx-auto">
             Aggregating Epigenetic Methylation Signals for Improved Long-Read <span className="text-[#007D69] italic">Genetic Variant Calling</span>
           </h1>
           <p className="max-w-2xl mx-auto text-lg text-stone-600 font-light leading-relaxed mb-12">

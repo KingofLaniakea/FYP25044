@@ -43,7 +43,7 @@ DnaBasePair.displayName = 'DnaBasePair';
 const DnaHelix = memo(() => {
   const count = 30;
   const pairs = useMemo(() => {
-    const methylatedIndices = [2, 5, 9, 13, 17, 20, 24, 27];
+    const methylatedIndices = [2, 4, 5, 8, 9, 13, 17, 20, 23, 24, 27];
     return Array.from({ length: count }).map((_, i) => ({
       y: (i - count / 2) * 0.6,
       rotation: i * 0.5,

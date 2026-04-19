@@ -13,13 +13,13 @@ export const AsmPhasingDemo: React.FC = () => {
   const [showMethylation, setShowMethylation] = useState(false);
   
   // Sequence Definition
-  // Indices: 012345678901234567890123
-  // Seq:     ATCGATCGATCGATCGATCGATCG
-  // Sites:         ^       ^ 
-  // Indices: 6, 14
+  // Indices: 01234567890123456789012345
+  // Seq:     ATCGATCGATCGATCGATCGATCGATC
+  // Sites:         ^       ^         ^^
+  // Indices: 6, 14, 23, 24
   
-  const fullSeq = "ATCGATCGATCGATCGATCGATCG";
-  const mSites = [6, 14];
+  const fullSeq = "ATCGATCGATCGATCGATCGATCGATC";
+  const mSites = [6, 14, 23, 24];
 
   // Render helper
   const RenderSequence = ({ 
