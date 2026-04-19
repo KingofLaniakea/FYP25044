@@ -1,24 +1,102 @@
-
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
-*/
+ */
 
-import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { AsmPhasingDemo, N50Chart, WorkflowDiagram } from './components/ProjectDiagrams';
-import { ArrowDown, Menu, X, FileText, Github, Linkedin } from 'lucide-react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { ArrowDown, FileText, Menu, X } from 'lucide-react';
+import {
+  AsmPhasingDemo,
+  ResultsCarousel,
+  WorkflowDiagram,
+} from './components/ProjectDiagrams';
+import type { ResultPanelKey } from './components/ProjectDiagrams';
 
-// Lazy load 3D scene to improve initial load
-const BioHeroScene = lazy(() => import('./components/BioScene').then(m => ({ default: m.BioHeroScene })));
+const BioHeroScene = lazy(() =>
+  import('./components/BioScene').then((module) => ({ default: module.BioHeroScene })),
+);
 
 const SceneFallback = () => (
   <div className="absolute inset-0 bg-gradient-to-b from-[#F5F9F8] to-[#E8F0EE]" />
 );
 
+const SectionHeading: React.FC<{ title: string; description?: React.ReactNode; className?: string }> = ({
+  title,
+  description,
+  className = '',
+}) => (
+  <div className={`mx-auto max-w-3xl text-center ${className}`.trim()}>
+    <h2 className="font-serif text-3xl mb-6 text-stone-900">{title}</h2>
+    {description ? (
+      <p className="text-base md:text-lg text-stone-600 leading-relaxed">{description}</p>
+    ) : null}
+  </div>
+);
+
+const resultSlides: Array<{
+  key: ResultPanelKey;
+  label: string;
+  title: string;
+  description: string;
+  bullets: string[];
+}> = [
+  {
+    key: 'phase-continuity',
+    label: 'Phase continuity',
+    title: 'Longer phase sets without aggressive rephasing',
+    description:
+      'HapBam reconnects fragmented SNP-defined blocks while keeping phase error close to baseline.',
+    bullets: [
+      'At 50x coverage, chromosome 12 shows an N50 increase of 1,419,073 bp.',
+      'Switch error and block-wise Hamming distance stay near baseline.',
+    ],
+  },
+  {
+    key: 'read-recovery',
+    label: 'Read rescue',
+    title: 'More reads receive haplotype tags',
+    description:
+      'Methylation evidence rescues reads that remain unresolved under SNP-only phasing.',
+    bullets: [
+      'Typical chromosome-level gain is approximately 2-5%.',
+      'Maximum HP0 reduction reaches 15.16% on chromosome 21 at 50x coverage.',
+    ],
+  },
+  {
+    key: 'variant-calling',
+    label: 'Variant calling',
+    title: 'Downstream gains come mainly from recall',
+    description:
+      'The downstream effect is modest, but consistent and recall-led at low-to-moderate coverage.',
+    bullets: [
+      'At 10x coverage, total F1 rises from 0.9366 to 0.9371.',
+      'False negatives drop from 294,917 to 294,172 at 10x coverage.',
+    ],
+  },
+  {
+    key: 'difficult-regions',
+    label: 'Difficult regions',
+    title: 'The clearest benefit is in hard genomic contexts',
+    description:
+      'Positive deltas concentrate in low-complexity and repeat-associated regions.',
+    bullets: [
+      'Strong positive strata include homopolymer and tandem-repeat categories.',
+      'Whole-genome runtime remains practical at 51 min 57 s for a 50x run.',
+    ],
+  },
+];
+
+const futureWork = [
+  'Build native methylation-aware variant callers.',
+  'Calibrate ML thresholds, anchor filters, and local methylation-block criteria more systematically.',
+  'Validate ASM-guided haplotagging across tissues, biological contexts, and additional sequencing settings.',
+];
+
 const App: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeResult, setActiveResult] = useState<ResultPanelKey>('phase-continuity');
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -26,22 +104,33 @@ const App: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const scrollToSection = (id: string) => (e: React.MouseEvent) => {
-    e.preventDefault();
+  const scrollToSection = (id: string) => (event: React.MouseEvent) => {
+    event.preventDefault();
     setMenuOpen(false);
     const element = document.getElementById(id);
     if (element) {
       const navHeight = 72;
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - navHeight;
-      window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#F5F9F8] text-stone-800 selection:bg-[#007D69] selection:text-white font-sans">
+  const activeResultIndex = resultSlides.findIndex((slide) => slide.key === activeResult);
+  const activeResultSlide = resultSlides[activeResultIndex];
 
-      {/* Navigation */}
+  const showPrevResult = () => {
+    const nextIndex = (activeResultIndex - 1 + resultSlides.length) % resultSlides.length;
+    setActiveResult(resultSlides[nextIndex].key);
+  };
+
+  const showNextResult = () => {
+    const nextIndex = (activeResultIndex + 1) % resultSlides.length;
+    setActiveResult(resultSlides[nextIndex].key);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F5F9F8] font-sans text-stone-800 selection:bg-[#007D69] selection:text-white">
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-4' : 'bg-transparent py-6'}`}>
         <div className="container mx-auto px-6 flex justify-between items-center">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
@@ -68,27 +157,34 @@ const App: React.FC = () => {
             {menuOpen ? <X /> : <Menu />}
           </button>
         </div>
+
+        {menuOpen && (
+          <div className="mx-4 mt-3 rounded-xl border border-stone-200 bg-white/95 p-4 shadow-lg md:hidden">
+            <div className="flex flex-col gap-4 text-sm font-medium tracking-wide text-stone-600">
+              <a href="#resources" onClick={scrollToSection('resources')} className="uppercase">Resources</a>
+              <a href="#abstract" onClick={scrollToSection('abstract')} className="uppercase">Abstract</a>
+              <a href="#methodology" onClick={scrollToSection('methodology')} className="uppercase">Methodology</a>
+              <a href="#results" onClick={scrollToSection('results')} className="uppercase">Results</a>
+              <a href="#team" onClick={scrollToSection('team')} className="uppercase">Team</a>
+            </div>
+          </div>
+        )}
       </nav>
 
-      {/* Hero Section */}
-      <header className="relative h-screen flex items-center justify-center overflow-hidden">
+      <header className="relative flex min-h-screen items-center justify-center overflow-hidden py-28 sm:py-32">
         <div className="absolute inset-0 overflow-hidden">
           <Suspense fallback={<SceneFallback />}>
             <BioHeroScene />
           </Suspense>
         </div>
 
-        {/* Gradient Overlay */}
         <div className="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(circle_at_center,rgba(245,249,248,0.85)_0%,rgba(245,249,248,0.5)_50%,rgba(245,249,248,0.2)_100%)]" />
 
         <div className="relative z-10 container mx-auto px-6 text-center">
-          <div className="inline-block mb-8 px-4 py-2 border border-[#007D69] text-[#007D69] text-xs tracking-[0.2em] uppercase font-bold rounded-sm backdrop-blur-sm bg-white/60">
-            The University of Hong Kong
-          </div>
-          <h1 className="font-serif text-4xl md:text-5xl font-bold tracking-tight leading-relaxed mb-8 text-stone-900 drop-shadow-sm max-w-4xl mx-auto">
+          <h1 className="mx-auto mb-6 max-w-4xl font-serif text-[1.95rem] font-bold tracking-tight leading-[1.26] text-stone-900 drop-shadow-sm sm:text-[2.15rem] md:mb-8 md:text-[3.05rem] md:leading-[1.22]">
             Aggregating Epigenetic Methylation Signals for Improved Long-Read <span className="text-[#007D69] italic">Genetic Variant Calling</span>
           </h1>
-          <p className="max-w-2xl mx-auto text-lg text-stone-600 font-light leading-relaxed mb-12">
+          <p className="mx-auto mb-8 max-w-2xl text-base font-light leading-relaxed text-stone-600 sm:text-lg md:mb-12">
             A novel Clair3-Methylation workflow that leverages Allele-Specific Methylation (ASM) signals to bridge genomic gaps left by SNP-only methods.
           </p>
 
@@ -97,8 +193,8 @@ const App: React.FC = () => {
             <div className="text-xs text-stone-500 uppercase tracking-widest">UID: 3035973854</div>
           </div>
 
-          <div className="flex justify-center mt-16">
-            <a href="#abstract" onClick={scrollToSection('abstract')} className="group flex flex-col items-center gap-2 text-sm font-medium text-stone-400 hover:text-[#007D69] transition-colors cursor-pointer animate-bounce">
+          <div className="mt-10 flex justify-center sm:mt-16">
+            <a href="#abstract" onClick={scrollToSection('abstract')} className="group flex flex-col items-center gap-2 text-xs font-medium text-stone-400 transition-colors hover:text-[#007D69] sm:text-sm cursor-pointer animate-bounce">
               <span>SCROLL</span>
               <span className="p-2 border border-stone-300 rounded-full group-hover:border-[#007D69] transition-colors bg-white/50">
                 <ArrowDown size={16} />
@@ -109,23 +205,27 @@ const App: React.FC = () => {
       </header>
 
       <main className="relative z-10 bg-[#F5F9F8]">
-        {/* Abstract / Problem */}
         <section id="abstract" className="py-24 bg-white">
           <div className="container mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-12 gap-12 items-start">
             <div className="md:col-span-4">
               <div className="inline-block mb-3 text-xs font-bold tracking-widest text-stone-500 uppercase">The Challenge</div>
-              <h2 className="font-serif text-4xl mb-6 leading-tight text-stone-900">The "Dark" Genome</h2>
+              <h2 className="font-serif text-3xl md:text-4xl mb-6 leading-tight text-stone-900">The "Dark" Genome</h2>
               <div className="w-16 h-1 bg-[#007D69] mb-6"></div>
               <p className="text-stone-500 italic font-serif">
-                "Contemporary haplotype-aware variant callers predominantly rely on heterozygous SNPs... compromising phasing continuity in homozygous regions."
+                "Haplotype-aware variant callers remain strongly dependent on heterozygous single-nucleotide polymorphisms (SNPs), leaving weak-marker regions underphased."
               </p>
             </div>
             <div className="md:col-span-8">
-              <p className="text-lg text-stone-700 leading-relaxed mb-6">
-                Modern genetics relies on <strong>Phasing</strong>—distinguishing between the maternal and paternal copies of a chromosome. Traditionally, tools look for <strong>SNPs</strong> (single letter differences) to tell them apart.
+              <p className="text-base md:text-lg text-stone-700 leading-relaxed mb-6">
+                Modern long-read variant calling relies on <strong>phasing</strong>, separating
+                reads into maternal and paternal haplotypes before downstream realignment and
+                genotyping. Most pipelines infer those haplotypes from <strong>heterozygous single-nucleotide polymorphisms (SNPs)</strong>.
               </p>
-              <p className="text-lg text-stone-700 leading-relaxed mb-6">
-                But what happens in <strong>homozygous regions</strong> where both copies are identical? Or in repetitive regions? The tools fail, the "phase blocks" break, and variant calling accuracy plummets. This project introduces a solution using an orthogonal data source: <strong>DNA Methylation</strong>.
+              <p className="text-base md:text-lg text-stone-700 leading-relaxed mb-6">
+                In <strong>low-complexity, repetitive, and weak-SNP regions</strong>, that signal
+                becomes sparse. Many reads remain untagged, phase blocks fragment, and downstream
+                calling loses evidence. HapBam introduces an orthogonal cue:
+                <strong> DNA methylation</strong>.
               </p>
 
               <AsmPhasingDemo />
@@ -133,111 +233,111 @@ const App: React.FC = () => {
           </div>
         </section>
 
-        {/* Methodology */}
         <section id="methodology" className="py-24 bg-[#F0F5F4] border-t border-stone-200">
-          <div className="container mx-auto px-6">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <div className="inline-block mb-3 text-xs font-bold tracking-widest text-[#007D69] uppercase">Our Solution</div>
-              <h2 className="font-serif text-4xl md:text-5xl mb-6 text-stone-900">Clair3-Methylation Pipeline</h2>
-              <p className="text-lg text-stone-600">
-                We augment the industry-standard Clair3 pipeline with a new module: <strong>Variant-ASM Joint Haplotagging</strong>.
-              </p>
-            </div>
+          <div className="container mx-auto px-6 md:px-12">
+            <SectionHeading
+              title="HapBam & Clair3-Methylation Workflow"
+              description={
+                <>
+                  HapBam sits between SNP-based phasing and Clair3 full-alignment calling,
+                  using six steps to rescue reads and update phase structure conservatively.
+                </>
+              }
+              className="mb-16"
+            />
 
-            <WorkflowDiagram />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-16 items-stretch">
-              <div className="bg-white p-8 rounded-xl shadow-sm border border-stone-200 flex flex-col">
-                <h3 className="font-serif text-2xl mb-4 text-stone-800">1. Fisher's Exact Test</h3>
-                <p className="text-stone-600 leading-relaxed flex-grow">
-                  We don't just guess which sites are methylated. We systematically scan for CpG dinucleotides exhibiting a <strong>bimodal methylation pattern</strong>. A 2x2 contingency table is constructed for each site, and Fisher's Exact Test (p &lt; 0.05) determines if methylation status is a statistically significant proxy for haplotype identity.
-                </p>
-              </div>
-              <div className="bg-white p-8 rounded-xl shadow-sm border border-stone-200 flex flex-col">
-                <h3 className="font-serif text-2xl mb-4 text-stone-800">2. Phase Set Concatenation</h3>
-                <p className="text-stone-600 leading-relaxed flex-grow">
-                  Standard tools leave gaps between phase sets. Our algorithm inspects the boundaries. If overlapping reads share a consistent ASM signature across the gap, we <strong>merge</strong> them. This is what drives the massive increase in N50 length.
-                </p>
-              </div>
+            <div className="mx-auto max-w-5xl px-2 md:px-4">
+              <WorkflowDiagram />
             </div>
           </div>
         </section>
 
-        {/* Results */}
-        <section id="results" className="py-24 bg-stone-50 text-stone-900">
-          <div className="container mx-auto px-6">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-              <div className="lg:col-span-5">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#007D69]/10 text-[#007D69] text-xs font-bold tracking-widest uppercase rounded-full mb-6 border border-[#007D69]/20">
-                  Preliminary Results
-                </div>
-                <h2 className="font-serif text-4xl md:text-5xl mb-6 text-stone-900">Bridging the Gap</h2>
-                <p className="text-lg text-stone-600 mb-6 leading-relaxed">
-                  Benchmarking on the Genome in a Bottle (GIAB) dataset demonstrates substantial improvements.
+        <section id="results" className="py-16 bg-stone-50 text-stone-900">
+          <div className="container mx-auto px-6 md:px-12">
+            <div className="mx-auto mb-6 max-w-3xl text-center">
+              <h2 className="font-serif text-3xl mb-3 text-stone-900">Experiments and Results</h2>
+              <motion.div
+                key={`${activeResultSlide.key}-heading`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+              >
+                <p className="text-base md:text-lg text-stone-600 leading-relaxed">
+                  {activeResultSlide.title}
                 </p>
-                <ul className="space-y-4 text-stone-600">
-                  <li className="flex items-start gap-3">
-                    <div className="mt-1 w-2 h-2 rounded-full bg-[#007D69]"></div>
-                    <span><strong>Haplotagged Reads:</strong> Increased by 5-12% across chromosomes.</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="mt-1 w-2 h-2 rounded-full bg-[#007D69]"></div>
-                    <span><strong>False Negatives:</strong> Reduced from 118,193 to 108,171.</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="mt-1 w-2 h-2 rounded-full bg-[#007D69]"></div>
-                    <span><strong>F1 Score:</strong> Consistent improvement in difficult genomic regions (Low Complexity, Homopolymers).</span>
-                  </li>
-                </ul>
+              </motion.div>
+            </div>
+            <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 items-center lg:grid-cols-12 xl:px-4">
+              <div className="lg:col-span-5 lg:pr-6">
+                <motion.div
+                  key={activeResultSlide.key}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                  className="max-w-md"
+                >
+                  <p className="text-sm md:text-base text-stone-600 leading-relaxed mb-6">{activeResultSlide.description}</p>
+                  <ul className="space-y-4 text-sm md:text-base text-stone-600">
+                    {activeResultSlide.bullets.map((bullet) => (
+                      <li key={bullet} className="flex items-start gap-3">
+                        <div className="mt-1 w-2 h-2 rounded-full bg-[#007D69]"></div>
+                        <span>{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
               </div>
               <div className="lg:col-span-7">
-                <N50Chart />
+                <ResultsCarousel
+                  activePanel={activeResult}
+                  onPrev={showPrevResult}
+                  onNext={showNextResult}
+                />
+              </div>
+            </div>
+            <div className="mt-8 flex justify-center">
+              <div className="flex items-center gap-3">
+                {resultSlides.map((slide) => (
+                  <button
+                    key={slide.key}
+                    onClick={() => setActiveResult(slide.key)}
+                    className={`h-2.5 rounded-full transition-all ${
+                      slide.key === activeResult ? 'w-8 bg-[#007D69]' : 'w-2.5 bg-stone-300'
+                    }`}
+                    aria-label={slide.label}
+                  />
+                ))}
               </div>
             </div>
           </div>
         </section>
 
-        {/* Future Work / Conclusion */}
         <section className="py-24 bg-white">
           <div className="container mx-auto px-6 max-w-4xl text-center">
             <h2 className="font-serif text-3xl mb-6 text-stone-900">Conclusion & Future Work</h2>
             <p className="text-lg text-stone-600 mb-12 leading-relaxed">
-              This project establishes a proof-of-concept for "multi-omic" variant calling. By computationally harvesting biological signals beyond the DNA sequence, we improve the resolution of the human genome. Future work will focus on a fully "Epigenome-Aware" deep learning model.
+              HapBam shows that methylation can be used as a practical augmentation layer for
+              long-read variant calling: rescuing more haplotagged reads, extending phase
+              continuity, and improving recall where SNP-only phasing is weak.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left items-stretch">
-              <div className="p-6 bg-[#F5F9F8] rounded-lg border border-stone-200 flex flex-col">
-                <h4 className="font-bold text-[#007D69] mb-2 uppercase text-xs tracking-wider">Completed (Phase 1 & 2)</h4>
-                <ul className="list-disc list-inside text-sm text-stone-600 space-y-2 flex-grow">
-                  <li>Literature Review & Tool Selection</li>
-                  <li>ASM Site Identification Algorithm</li>
-                  <li>Phase Set Concatenation Module</li>
-                  <li>Preliminary Benchmarking (Chr 20)</li>
-                </ul>
-              </div>
-              <div className="p-6 bg-white rounded-lg border border-stone-200 dashed-border flex flex-col">
-                <h4 className="font-bold text-stone-400 mb-2 uppercase text-xs tracking-wider">Upcoming (Phase 3)</h4>
-                <ul className="list-disc list-inside text-sm text-stone-600 space-y-2 flex-grow">
-                  <li>Full-Scale Benchmarking (All Chromosomes)</li>
-                  <li>Refine ASM filtering for CDS regions</li>
-                  <li>Final Report Submission</li>
-                </ul>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left items-stretch">
+              {futureWork.map((item) => (
+                <div key={item} className="p-6 bg-[#F5F9F8] rounded-lg border border-stone-200 flex flex-col">
+                  <h4 className="font-bold text-[#007D69] mb-3 uppercase text-xs tracking-wider">Future Work</h4>
+                  <p className="text-sm text-stone-600 leading-relaxed flex-grow">{item}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* Team/Authors */}
         <section id="team" className="py-24 bg-[#F5F9F8] border-t border-stone-300">
           <div className="container mx-auto px-6">
-            <div className="text-center mb-16">
-              <div className="inline-block mb-3 text-xs font-bold tracking-widest text-stone-500 uppercase">Acknowledgement</div>
-              <h2 className="font-serif text-3xl md:text-5xl mb-4 text-stone-900">Project Team</h2>
-            </div>
+            <SectionHeading title="Project Team" className="mb-16" />
 
             <div className="flex flex-col md:flex-row gap-8 justify-center items-stretch flex-wrap">
               <div className="flex flex-col items-center p-8 bg-white rounded-xl border border-stone-200 shadow-sm w-full max-w-xs min-h-[280px]">
                 <div className="w-20 h-20 rounded-full bg-stone-200 mb-4 overflow-hidden flex-shrink-0">
-                  {/* Placeholder for avatar */}
                   <div className="w-full h-full bg-stone-300 flex items-center justify-center text-stone-500 text-2xl font-serif">L</div>
                 </div>
                 <h3 className="font-serif text-2xl text-stone-900 text-center mb-1">LI Junzhe</h3>
@@ -270,17 +370,11 @@ const App: React.FC = () => {
           </div>
         </section>
 
-        {/* Resources Section */}
         <section id="resources" className="py-20 bg-white border-t border-stone-200">
           <div className="container mx-auto px-6">
-            <div className="text-center mb-12">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-stone-200 text-stone-600 text-xs font-bold tracking-widest uppercase rounded-full mb-4">
-                Project Documents
-              </div>
-              <h2 className="font-serif text-3xl md:text-4xl font-bold text-stone-900">Downloads & Resources</h2>
-            </div>
+            <SectionHeading title="Downloads & Resources" className="mb-12" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              <a href={`${import.meta.env.BASE_URL}docs/Detailed Project Plan.pdf`} download className="bg-[#F5F9F8] p-6 rounded-xl border border-stone-200 hover:border-[#007D69] transition-all group cursor-pointer shadow-sm hover:shadow-md flex flex-col min-h-[200px]">
+              <a href={`${import.meta.env.BASE_URL}docs/Detailed%20Project%20Plan.pdf`} target="_blank" rel="noreferrer" className="bg-[#F5F9F8] p-6 rounded-xl border border-stone-200 hover:border-[#007D69] transition-all group cursor-pointer shadow-sm hover:shadow-md flex flex-col min-h-[200px]">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-stone-100 rounded-lg group-hover:bg-[#007D69]/10 transition-colors flex-shrink-0">
                     <FileText className="text-stone-600 group-hover:text-[#007D69]" size={24} />
@@ -290,7 +384,7 @@ const App: React.FC = () => {
                 <p className="text-xs text-stone-500 mb-4 flex-grow">Original project scope and timeline.</p>
                 <div className="text-[10px] font-mono text-stone-400">PDF • 478 KB</div>
               </a>
-              <a href={`${import.meta.env.BASE_URL}docs/interim-report.pdf`} download className="bg-[#F5F9F8] p-6 rounded-xl border border-stone-200 hover:border-[#007D69] transition-all group cursor-pointer shadow-sm hover:shadow-md flex flex-col min-h-[200px]">
+              <a href={`${import.meta.env.BASE_URL}docs/Interim%20Report.pdf`} target="_blank" rel="noreferrer" className="bg-[#F5F9F8] p-6 rounded-xl border border-stone-200 hover:border-[#007D69] transition-all group cursor-pointer shadow-sm hover:shadow-md flex flex-col min-h-[200px]">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-stone-100 rounded-lg group-hover:bg-[#007D69]/10 transition-colors flex-shrink-0">
                     <FileText className="text-stone-600 group-hover:text-[#007D69]" size={24} />
@@ -298,9 +392,9 @@ const App: React.FC = () => {
                 </div>
                 <h3 className="font-bold text-stone-900 mb-1 font-serif">Interim Report</h3>
                 <p className="text-xs text-stone-500 mb-4 flex-grow">Phase 1 progress and initial benchmarks.</p>
-                <div className="text-[10px] font-mono text-stone-400">PDF • Coming Soon</div>
+                <div className="text-[10px] font-mono text-stone-400">PDF • 1.56 MB</div>
               </a>
-              <a href={`${import.meta.env.BASE_URL}docs/final-report.pdf`} download className="bg-[#F5F9F8] p-6 rounded-xl border border-stone-200 hover:border-[#007D69] transition-all group cursor-pointer shadow-sm hover:shadow-md flex flex-col min-h-[200px]">
+              <a href={`${import.meta.env.BASE_URL}docs/Final%20Report.pdf`} target="_blank" rel="noreferrer" className="bg-[#F5F9F8] p-6 rounded-xl border border-stone-200 hover:border-[#007D69] transition-all group cursor-pointer shadow-sm hover:shadow-md flex flex-col min-h-[200px]">
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-stone-100 rounded-lg group-hover:bg-[#007D69]/10 transition-colors flex-shrink-0">
                     <FileText className="text-stone-600 group-hover:text-[#007D69]" size={24} />
@@ -308,24 +402,19 @@ const App: React.FC = () => {
                 </div>
                 <h3 className="font-bold text-stone-900 mb-1 font-serif">Final Report</h3>
                 <p className="text-xs text-stone-500 mb-4 flex-grow">Complete methodology and results analysis.</p>
-                <div className="text-[10px] font-mono text-stone-400">PDF • Coming Soon</div>
+                <div className="text-[10px] font-mono text-stone-400">PDF • 5.85 MB</div>
               </a>
             </div>
           </div>
         </section>
-
       </main>
 
-      <footer className="bg-stone-900 text-stone-400 py-16">
-        <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+      <footer className="bg-stone-900 text-stone-400 py-10">
+        <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-5">
           <div className="text-center md:text-left">
             <div className="text-white font-serif font-bold text-2xl mb-2">Clair3-Methylation</div>
             <p className="text-sm text-stone-500">FYP25044 Final Year Project</p>
-            <p className="text-xs text-stone-600 mt-2">November 28, 2025</p>
-          </div>
-          <div className="flex gap-4">
-            <Github className="hover:text-white transition-colors cursor-pointer" />
-            <Linkedin className="hover:text-white transition-colors cursor-pointer" />
+            <p className="text-xs text-stone-600 mt-2">April 19, 2026</p>
           </div>
         </div>
       </footer>
